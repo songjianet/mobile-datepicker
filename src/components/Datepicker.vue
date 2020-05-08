@@ -13,11 +13,26 @@
       </div>
       <div class="dp-date-content">
         <div class="dp-switch-date">
-          <span class="iconfont iconicon-test2"></span>
-          <span class="iconfont iconicon-test"></span>
-          <span>2020年10月</span>
-          <span class="iconfont iconicon-test1"></span>
-          <span class="iconfont iconicon-test3"></span>
+          <div>
+            <span class="iconfont iconicon-test2"></span>
+            <span class="iconfont iconicon-test"></span>
+          </div>
+          <div>
+            <span>2020年10月</span>
+          </div>
+          <div>
+            <span class="iconfont iconicon-test1"></span>
+            <span class="iconfont iconicon-test3"></span>
+          </div>
+        </div>
+        <div class="dp-date-day">
+          <span
+              class="dp-day"
+              v-for="(item, index) in days"
+              :id="index === 25 ? 'day' : ''"
+              :key="index">
+            {{item ? item : ''}}
+          </span>
         </div>
       </div>
       <div class="dp-date-footer">
@@ -49,15 +64,15 @@
       }, // 是否日期时间范围选择，不启用则只能选择一天
 
       defaultDate: {
-        type: Date || String,
+        type: Date,
         default: () => { return new Date() }
       }, // 默认时间
       startDate: {
-        type: Date || String,
+        type: Date,
         default: () => { return new Date(1900, 1, 1) }
       }, // 开始时间
       endDate: {
-        type: Date || String,
+        type: Date,
         default: () => { return new Date() }
       }, // 开始时间
 
@@ -74,12 +89,78 @@
     data() {
       return {
         changeContentStatus: false, // 切换年份选择和日期选择
+        year: '',
+        month: '',
+        day: '',
+        days: [],
+        monthMaxDayNum: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], // 每个月份最大天数
       }
     },
+    created() {
+      if (this.isShow && this.defaultDate) {
+        this.initDate(this.defaultDate) // 初始化日期
+      } // FIXME: 保证刷新，数据不丢失 -- 怎么实现的
+    },
     methods: {
+      /**
+       * 初始化日期
+       * @method initDate
+       * @param {Date} date 传入的标准时间
+       * @author songjianet
+       * @day 2020-05-08 09:30:08
+       * */
+      initDate(date) {
+        if (!date) { return }
+
+        this.year = date.getFullYear()
+        this.month = date.getMonth()
+        this.day = date.getDate()
+
+        this.updateDate()
+      },
+
+      /**
+       * 计算显示日期
+       * @method initDate
+       * @author songjianet
+       * @day 2020-05-08 09:30:08
+       * */
+      updateDate() {
+        this.days = []
+
+        if ((this.year % 4 === 0 && this.year % 100 !== 0) || this.year % 400 === 0) {
+          this.monthMaxDayNum[1] = 29
+        } // 计算闰年
+
+        let firstDay = new Date(this.year, this.month, 1).getDay() // 获取当前月份第一天是星期几
+
+        for (let i = 0; i < firstDay; i++) {
+          this.days.push(0) // 每个月在第一天之前进行补0操作，如firstDay为周二则需要补两个0
+        }
+
+        for (let i = 1; i <= this.monthMaxDayNum[this.month]; i++) {
+          this.days.push(i) // 补完0后，根据该月最大的天数进行累加
+        }
+
+        setTimeout(() => {
+          console.log(document.getElementById('day').clientWidth)
+        }, 100)
+      }, // FIXME: 可以封装成一个单独的方法
+
+      /**
+       * 取消按钮
+       * @method handleCancel
+       * @author songjianet
+       * @day 2020-05-08 10:16:16
+       * */
       handleCancel() {
         this.changeContentStatus = false
         this.$emit('cancel')
+      }
+    },
+    watch: {
+      isShow() {
+        this.initDate(this.defaultDate) // 初始化日期
       }
     }
   }
@@ -106,7 +187,7 @@
       background-color: #fff;
 
       .dp-date-header {
-        padding: 1rem 1.3rem;
+        padding: 1rem 1.6rem;
         color: #fff;
 
         p {
@@ -132,21 +213,54 @@
         width: 100%;
         box-sizing: border-box;
         background-color: #fff;
-        padding: 0.4rem 0.6rem;
-        display: flex;
+        padding: 0.5rem 1.3rem;
 
-        span {
-          display: inline-block;
-          flex: 1;
+        .dp-switch-date {
+          display: flex;
+          justify-content: space-between;
+          flex-grow: 1;
+          height: 1.5rem;
+          line-height: 1.5rem;
+          color: #666;
 
-          &:nth-of-type(3) {
-            flex: 0 0 50% 0 0;
+          span {
+            margin: 0 0.2rem;
+            color: #666;
+            font: {
+              size: 1.2rem;
+            }
+          }
+
+          &:nth-of-type(2) {
+            flex-grow: 20;
+
+            span {
+              display: inline-block;
+              width: 100%;
+              text-align: center;
+              font-size: 0.9rem;
+            }
+          }
+        }
+
+        .dp-date-day {
+          font-size: 0.25rem;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+
+          .dp-day {
+            width: 14.285%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
           }
         }
       }
 
       .dp-date-footer {
-        margin: 0 0.6rem;
+        margin: 0 1.3rem;
         display: flex;
         height: 2.5rem;
         line-height: 2.5rem;
