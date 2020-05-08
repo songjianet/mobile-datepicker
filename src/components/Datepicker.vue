@@ -3,12 +3,12 @@
     <div class="dp-date-container">
       <div class="dp-date-header" :style="{backgroundColor: themeColor}">
         <p>
-          <span>2020年10月10号</span>
-          <span>23:50</span>
+          <span>{{getYearMonthDayStr(defaultDate)}}</span>
+          <span v-if="isTimeSelect">23:50</span>
         </p>
-        <p>
-          <span>2020年10月11号</span>
-          <span>23:50</span>
+        <p v-if="isDateTimeRange">
+          <span>{{getYearMonthDayStr(defaultDate)}}</span>
+          <span v-if="isTimeSelect">23:50</span>
         </p>
       </div>
       <div class="dp-date-content">
@@ -25,18 +25,26 @@
             <span class="iconfont iconicon-test3"></span>
           </div>
         </div>
+        <div class="dp-weeks">
+            <span
+                class="mdp_week"
+                v-for="(item, index) in weeks"
+                :style="{color: index === 0 || index === 6 ? themeColor : ''}"
+                :key="index">
+                {{item}}
+            </span>
+        </div>
         <div class="dp-date-day">
-          <span
-              class="dp-day"
-              v-for="(item, index) in days"
-              :id="index === 25 ? 'day' : ''"
-              :key="index">
-            {{item ? item : ''}}
-          </span>
+          <div class="dp-day" v-for="(item, index) in days" :key="index">
+            <span
+                :style="{color: (new Date(year, month, item).getDay() === 6 || new Date(year, month, item).getDay() === 0) ? themeColor : ''}">
+              {{item ? item : ''}}
+            </span>
+          </div>
         </div>
       </div>
       <div class="dp-date-footer">
-        <button class="dp-button" :style="{color: themeColor}">取消</button>
+        <button class="dp-button" @click.self="handleCancel" :style="{color: themeColor}">取消</button>
         <button class="dp-button" :style="{color: themeColor}">确定</button>
       </div>
     </div>
@@ -44,6 +52,7 @@
 </template>
 
 <script>
+  import { getYearMonthDay, getYearMonthDayStr } from "../date-format";
   import '../assets/scss/iconfont.scss'
 
   export default {
@@ -62,9 +71,13 @@
         type: Boolean,
         default: false
       }, // 是否日期时间范围选择，不启用则只能选择一天
+      isAdjoinMonthDay: {
+        type: Boolean,
+        default: false
+      }, // 是否允许在当前月份补充显示上月最后一星期的日期和下月的第一个星期的日期
 
       defaultDate: {
-        type: Date,
+        type: Date || Array, // TODO: 还没有对数组进行验证
         default: () => { return new Date() }
       }, // 默认时间
       startDate: {
@@ -74,7 +87,7 @@
       endDate: {
         type: Date,
         default: () => { return new Date() }
-      }, // 开始时间
+      }, // 结束时间
 
       language: {
         type: String,
@@ -88,12 +101,15 @@
     },
     data() {
       return {
+        getYearMonthDayStr,
         changeContentStatus: false, // 切换年份选择和日期选择
         year: '',
         month: '',
         day: '',
         days: [],
         monthMaxDayNum: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], // 每个月份最大天数
+        weeks: ['日', '一', '二', '三', '四', '五', '六'],
+        activeDays: [], // 存放选中的
       }
     },
     created() {
@@ -112,9 +128,7 @@
       initDate(date) {
         if (!date) { return }
 
-        this.year = date.getFullYear()
-        this.month = date.getMonth()
-        this.day = date.getDate()
+        [this.year, this.month, this.day] = getYearMonthDay(date)
 
         this.updateDate()
       },
@@ -141,10 +155,6 @@
         for (let i = 1; i <= this.monthMaxDayNum[this.month]; i++) {
           this.days.push(i) // 补完0后，根据该月最大的天数进行累加
         }
-
-        setTimeout(() => {
-          console.log(document.getElementById('day').clientWidth)
-        }, 100)
       }, // FIXME: 可以封装成一个单独的方法
 
       /**
@@ -243,6 +253,23 @@
           }
         }
 
+        .dp-weeks {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          margin: 1.8rem 0 0.2rem 0;
+
+          span {
+            font-size: 0.25rem;
+            width: 14.285%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #999;
+          }
+        }
+
         .dp-date-day {
           font-size: 0.25rem;
           width: 100%;
@@ -252,9 +279,18 @@
 
           .dp-day {
             width: 14.285%;
+            height: 0;
+            padding-bottom: 14.285%;
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+
+            span {
+              position: absolute;
+              top: calc(50% - 0.5rem);
+              height: 1rem;
+            }
           }
         }
       }
