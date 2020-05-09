@@ -4,6 +4,9 @@
     <datepicker
         :isShow="show"
         :defaultDate="defaultDate"
+        :startDate="startDate"
+        :endDate="endDate"
+        :isOverDateTime="true"
         @cancel="show = false"/>
   </div>
 </template>
@@ -15,7 +18,9 @@
     data() {
       return {
         show: false,
-        defaultDate: new Date('2019/2/1')
+        defaultDate: new Date('2020/2/1'),
+        startDate: new Date('2020/1/1'),
+        endDate: new Date() 
       }
     },
     components: {

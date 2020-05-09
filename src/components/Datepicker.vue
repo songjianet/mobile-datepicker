@@ -3,7 +3,7 @@
     <div class="dp-date-container">
       <div class="dp-date-header" :style="{backgroundColor: themeColor}">
         <p>
-          <span>{{getYearMonthDayStr(defaultDate)}}</span>
+          <span>{{year + '年' + month + '月' + day + '日'}}</span>
           <span v-if="isTimeSelect">23:50</span>
         </p>
         <p v-if="isDateTimeRange">
@@ -14,15 +14,15 @@
       <div class="dp-date-content">
         <div class="dp-switch-date">
           <div>
-            <span class="iconfont iconicon-test2"></span>
-            <span class="iconfont iconicon-test"></span>
+            <span class="iconfont iconicon-test2" @click.self="prevYear"></span>
+            <span class="iconfont iconicon-test" @click.self="prevMonth"></span>
           </div>
           <div>
-            <span>2020年10月</span>
+            <span>{{year + '年' + month + '月'}}</span>
           </div>
           <div>
-            <span class="iconfont iconicon-test1"></span>
-            <span class="iconfont iconicon-test3"></span>
+            <span class="iconfont iconicon-test1" @click.self="nextMonth"></span>
+            <span class="iconfont iconicon-test3" @click.self="nextYear"></span>
           </div>
         </div>
         <div class="dp-weeks">
@@ -35,11 +35,12 @@
             </span>
         </div>
         <div class="dp-date-day">
-          <div class="dp-day" v-for="(item, index) in days" :key="index">
-            <span
-                :style="{color: (new Date(year, month, item).getDay() === 6 || new Date(year, month, item).getDay() === 0) ? themeColor : ''}">
-              {{item ? item : ''}}
-            </span>
+          <div
+              class="dp-day"
+              v-for="(item, index) in days"
+              :key="index"
+              :style="{backgroundColor: item === day ? themeColor : ''}">
+            <span @click.self="handleSelectDay(item)" :style="{color: setDayColor(item)}">{{item ? item : ''}}</span>
           </div>
         </div>
       </div>
@@ -52,7 +53,7 @@
 </template>
 
 <script>
-  import { getYearMonthDay, getYearMonthDayStr } from "../date-format";
+  import { getYearMonthDay, getYearMonthDayStr } from "../utils/date-format";
   import '../assets/scss/iconfont.scss'
 
   export default {
@@ -75,6 +76,10 @@
         type: Boolean,
         default: false
       }, // 是否允许在当前月份补充显示上月最后一星期的日期和下月的第一个星期的日期
+      isOverDateTime: {
+        type: Boolean,
+        default: false
+      }, // 不在开始日期和结束日期范围内的非当月月份是否隐藏
 
       defaultDate: {
         type: Date || Array, // TODO: 还没有对数组进行验证
@@ -126,12 +131,34 @@
        * @day 2020-05-08 09:30:08
        * */
       initDate(date) {
-        if (!date) { return }
+        if (!date) { return false }
 
         [this.year, this.month, this.day] = getYearMonthDay(date)
 
         this.updateDate()
       },
+
+
+      /**
+       * 当传入参数isOverDateTime为true时，使用该方法进行判断，不再渲染超过日期范围外的非当月月份
+       * @method overDateTimeIsHidden
+       * @param {String} type 传入的操作类型，prev, next
+       * @return {Boolean} 是否允许渲染下一个操作的月份
+       * @author songjianet
+       * @day 2020-05-09 16:58:52
+       * */
+      overDateTimeIsHidden(type) {
+        let status = true
+        let tempSelectDateTime = new Date(this.year, this.month, this.day)
+        // let tempStartDateTime = new Date(this.startDate.getFullYear(), this.startDate.getMonth(), 1)
+
+        if (type === 'next' && ((tempSelectDateTime > this.endDate) || (this.year >= this.endDate.getFullYear()))) {
+          status = false
+        }
+
+        return status
+      },
+
 
       /**
        * 计算显示日期
@@ -141,21 +168,109 @@
        * */
       updateDate() {
         this.days = []
+        this.monthMaxDayNum[1] = 28
 
         if ((this.year % 4 === 0 && this.year % 100 !== 0) || this.year % 400 === 0) {
           this.monthMaxDayNum[1] = 29
         } // 计算闰年
 
-        let firstDay = new Date(this.year, this.month, 1).getDay() // 获取当前月份第一天是星期几
+        let firstDay = new Date(this.year, this.month - 1, this.day).getDay() // 获取当前月份第一天是星期几
 
         for (let i = 0; i < firstDay; i++) {
           this.days.push(0) // 每个月在第一天之前进行补0操作，如firstDay为周二则需要补两个0
         }
 
-        for (let i = 1; i <= this.monthMaxDayNum[this.month]; i++) {
+        for (let i = 1; i <= this.monthMaxDayNum[this.month - 1]; i++) {
           this.days.push(i) // 补完0后，根据该月最大的天数进行累加
         }
       }, // FIXME: 可以封装成一个单独的方法
+
+
+      /**
+       * 处理日期点击
+       * @method handleSelectDay
+       * @param {Number} day 点击的日期
+       * @author songjianet
+       * @day 2020-05-09 09:22:18
+       * */
+      handleSelectDay(day) {
+        if (!day) { return false }
+
+        let activeDay = new Date(this.year, this.month - 1, day)
+
+        if (this.startDate > activeDay || this.endDate < activeDay) { return false }
+
+        this.day = day
+      },
+
+
+      /**
+       * 处理下一个月
+       * @method nextMonth
+       * @author songjianet
+       * @day 2020-05-09 12:15:24
+       * */
+      nextMonth() {
+        if (this.isOverDateTime && this.overDateTimeIsHidden('next') === false) { return false }
+
+        if (this.month === 12) {
+          this.year += 1
+          this.month = 1
+        } else {
+          this.month += 1
+        }
+
+        this.updateDate()
+      },
+
+      /**
+       * 处理下一年
+       * @method nextYear
+       * @author songjianet
+       * @day 2020-05-09 12:18:01
+       * */
+      nextYear() {
+        if (this.isOverDateTime && this.overDateTimeIsHidden('next') === false) { return false }
+
+        this.year += 1
+
+        this.updateDate()
+      },
+
+
+      /**
+       * 处理上一个月
+       * @method prevMonth
+       * @author songjianet
+       * @day 2020-05-09 12:19:17
+       * */
+      prevMonth() {
+        if (this.isOverDateTime && this.overDateTimeIsHidden() === false) { return false }
+
+        if (this.month - 1 === 0) {
+          this.year -= 1
+          this.month = 12
+        } else {
+          this.month -= 1
+        }
+
+        this.updateDate()
+      },
+
+      /**
+       * 处理上一年
+       * @method prevYear
+       * @author songjianet
+       * @day 2020-05-09 12:19:17
+       * */
+      prevYear() {
+        if (this.isOverDateTime && this.overDateTimeIsHidden() === false) { return false }
+
+        this.year -= 1
+
+        this.updateDate()
+      },
+
 
       /**
        * 取消按钮
@@ -166,6 +281,37 @@
       handleCancel() {
         this.changeContentStatus = false
         this.$emit('cancel')
+      },
+
+
+      /**
+       * 处理日期字体颜色
+       * @method setDayColor
+       * @param {Number} day 传入的日期
+       * @return {String || Boolean} 字体颜色或布尔值
+       * @author songjianet
+       * @day
+       * */
+      setDayColor(day) {
+        if (!day) { return false }
+
+        let tempFontColor = ''
+        let tempDateTime = new Date(this.year, this.month - 1, day)
+        let tempDateTimeWeek = new Date(this.year, this.month - 1, day).getDay()
+
+        if (day === this.day) {
+          tempFontColor = '#fff'
+        } else if (tempDateTimeWeek === 6 || tempDateTimeWeek === 0) {
+          if (this.startDate > tempDateTime || this.endDate < tempDateTime) {
+            tempFontColor = '#999'
+          } else {
+            tempFontColor = this.themeColor
+          }
+        } else if (this.startDate > tempDateTime || this.endDate < tempDateTime) {
+          tempFontColor = '#999'
+        }
+
+        return tempFontColor
       }
     },
     watch: {
@@ -258,7 +404,7 @@
           display: flex;
           align-items: center;
           flex-wrap: wrap;
-          margin: 1.8rem 0 0.2rem 0;
+          margin: 1.8rem 0 0.5rem 0;
 
           span {
             font-size: 0.25rem;
@@ -285,6 +431,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            border-radius: 50%;
 
             span {
               position: absolute;
