@@ -149,12 +149,42 @@
        * */
       overDateTimeIsHidden(type) {
         let status = true
-        let tempSelectDateTime = new Date(this.year, this.month, this.day)
-        // let tempStartDateTime = new Date(this.startDate.getFullYear(), this.startDate.getMonth(), 1)
 
-        if (type === 'next' && ((tempSelectDateTime > this.endDate) || (this.year >= this.endDate.getFullYear()))) {
+        if (type === 'year' && (this.year >= this.endDate.getFullYear() && this.year <= this.startDate.getFullYear())) {
           status = false
-        }
+        } // 判断年份是否在开始日期和结束日期范围内
+
+        if (type === 'nextMonth') {
+          let tempYear = this.year
+          let tempMonth = this.month
+
+          if (tempMonth === 12) {
+            tempYear += 1
+            tempMonth = 1
+
+            if (new Date(tempYear, tempMonth, this.day) > this.endDate) { return false }
+          } else {
+            tempMonth += 1
+
+            if (new Date(tempYear, tempMonth, this.day) > this.endDate) { return false }
+          }
+        } // 判断下一个月是否在开始日期和结束日期范围内
+
+        if (type === 'prevMonth') {
+          let tempYear = this.year
+          let tempMonth = this.month
+
+          if (tempMonth - 1 === 0) {
+            tempYear -= 1
+            tempMonth = 12
+
+            if (new Date(tempYear, tempMonth, this.day) < this.startDate) { return false }
+          } else {
+            tempMonth -= 1
+
+            if (new Date(tempYear, tempMonth, this.day) < this.startDate) { return false }
+          }
+        } // 判断上一个月是否在开始日期和结束日期范围内
 
         return status
       },
@@ -211,7 +241,7 @@
        * @day 2020-05-09 12:15:24
        * */
       nextMonth() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden('next') === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('nextMonth') === false) { return false }
 
         if (this.month === 12) {
           this.year += 1
@@ -230,7 +260,7 @@
        * @day 2020-05-09 12:18:01
        * */
       nextYear() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden('next') === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('year') === false) { return false }
 
         this.year += 1
 
@@ -245,7 +275,7 @@
        * @day 2020-05-09 12:19:17
        * */
       prevMonth() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden() === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('prevMonth') === false) { return false }
 
         if (this.month - 1 === 0) {
           this.year -= 1
@@ -264,7 +294,7 @@
        * @day 2020-05-09 12:19:17
        * */
       prevYear() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden() === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('year') === false) { return false }
 
         this.year -= 1
 
