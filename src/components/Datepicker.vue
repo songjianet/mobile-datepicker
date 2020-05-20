@@ -150,9 +150,9 @@
       overDateTimeIsHidden(type) {
         let status = true
 
-        if (type === 'year' && (this.year >= this.endDate.getFullYear() && this.year <= this.startDate.getFullYear())) {
-          status = false
-        } // 判断年份是否在开始日期和结束日期范围内
+        if (type === 'nextYear' && (this.year >= this.endDate.getFullYear())) { return false } // 判断下一年是否在开始日期和结束日期范围内
+
+        if (type === 'prevYear' && (this.year <= this.startDate.getFullYear())) { return false } // 判断上一年是否在开始日期和结束日期范围内
 
         if (type === 'nextMonth') {
           let tempYear = this.year
@@ -162,11 +162,17 @@
             tempYear += 1
             tempMonth = 1
 
-            if (new Date(tempYear, tempMonth, this.day) > this.endDate) { return false }
+            let tempDefaultMonth = parseInt(tempYear + (tempMonth < 10 ? '0' + tempMonth : tempMonth))
+            let tempEndMonth = parseInt(this.endDate.getFullYear() + (this.endDate.getMonth() < 10 ? '0' + (this.endDate.getMonth() + 1) : (this.endDate.getMonth() + 1)))
+
+            if (tempDefaultMonth > tempEndMonth) { return false }
           } else {
             tempMonth += 1
 
-            if (new Date(tempYear, tempMonth, this.day) > this.endDate) { return false }
+            let tempDefaultMonth = parseInt(tempYear + (tempMonth < 10 ? '0' + tempMonth : tempMonth))
+            let tempEndMonth = parseInt(this.endDate.getFullYear() + (this.endDate.getMonth() < 10 ? '0' + (this.endDate.getMonth() + 1) : (this.endDate.getMonth() + 1)))
+
+            if (tempDefaultMonth > tempEndMonth) { return false }
           }
         } // 判断下一个月是否在开始日期和结束日期范围内
 
@@ -178,16 +184,24 @@
             tempYear -= 1
             tempMonth = 12
 
-            if (new Date(tempYear, tempMonth, this.day) < this.startDate) { return false }
+            let tempDefaultMonth = parseInt(tempYear + (tempMonth < 10 ? '0' + tempMonth : tempMonth))
+            let tempStartMonth = parseInt(this.startDate.getFullYear() + (this.startDate.getMonth() < 10 ? '0' + (this.startDate.getMonth() + 1) : (this.startDate.getMonth() + 1)))
+
+            if (tempDefaultMonth < tempStartMonth) { return false }
           } else {
             tempMonth -= 1
 
-            if (new Date(tempYear, tempMonth, this.day) < this.startDate) { return false }
+            let tempDefaultMonth = parseInt(tempYear + (tempMonth < 10 ? '0' + tempMonth : tempMonth))
+            let tempStartMonth = parseInt(this.startDate.getFullYear() + (this.startDate.getMonth() < 10 ? '0' + (this.startDate.getMonth() + 1) : (this.startDate.getMonth() + 1)))
+
+            if (tempDefaultMonth < tempStartMonth) { return false }
           }
         } // 判断上一个月是否在开始日期和结束日期范围内
 
         return status
       },
+      // FIXME: 后续有待封装成一个方法
+      // FIXME: 存在当前月份超过结束时间月份，点击下一年会进行渲染的问题
 
 
       /**
@@ -260,7 +274,7 @@
        * @day 2020-05-09 12:18:01
        * */
       nextYear() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden('year') === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('nextYear') === false) { return false }
 
         this.year += 1
 
@@ -294,7 +308,7 @@
        * @day 2020-05-09 12:19:17
        * */
       prevYear() {
-        if (this.isOverDateTime && this.overDateTimeIsHidden('year') === false) { return false }
+        if (this.isOverDateTime && this.overDateTimeIsHidden('prevYear') === false) { return false }
 
         this.year -= 1
 
