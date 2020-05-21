@@ -150,9 +150,23 @@
       overDateTimeIsHidden(type) {
         let status = true
 
-        if (type === 'nextYear' && (this.year >= this.endDate.getFullYear())) { return false } // 判断下一年是否在开始日期和结束日期范围内
+        if (type === 'nextYear') {
+          let tempDefaultMonth = parseInt(this.year + (this.month < 10 ? '0' + this.month : this.month))
+          let tempEndMonth = parseInt(this.endDate.getFullYear() + (this.endDate.getMonth() < 10 ? '0' + (this.endDate.getMonth() + 1) : (this.endDate.getMonth() + 1)))
 
-        if (type === 'prevYear' && (this.year <= this.startDate.getFullYear())) { return false } // 判断上一年是否在开始日期和结束日期范围内
+          if (tempEndMonth - tempDefaultMonth < 100) { return false }
+
+          if (this.year >= this.endDate.getFullYear()) { return false }
+        } // 判断下一年是否在开始日期和结束日期范围内
+
+        if (type === 'prevYear') {
+          let tempDefaultMonth = parseInt(this.year + (this.month < 10 ? '0' + this.month : this.month))
+          let tempStartMonth = parseInt(this.startDate.getFullYear() + (this.startDate.getMonth() < 10 ? '0' + (this.startDate.getMonth() + 1) : (this.startDate.getMonth() + 1)))
+
+          if (tempDefaultMonth - tempStartMonth < 100) { return false }
+
+          if (this.year <= this.startDate.getFullYear()) { return false }
+        } // 判断上一年是否在开始日期和结束日期范围内
 
         if (type === 'nextMonth') {
           let tempYear = this.year
@@ -199,9 +213,7 @@
         } // 判断上一个月是否在开始日期和结束日期范围内
 
         return status
-      },
-      // FIXME: 后续有待封装成一个方法
-      // FIXME: 存在当前月份超过结束时间月份，点击下一年会进行渲染的问题
+      }, // FIXME: 后续有待封装成一个方法
 
 
       /**
